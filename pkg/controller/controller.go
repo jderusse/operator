@@ -129,6 +129,13 @@ func (c *VaultController) ensureCustomResourceDefinitions() error {
 }
 
 func (c *VaultController) Run(stopCh <-chan struct{}) {
+	// non blocking
+	// run a go routine
+	err := c.MetricsExporter.Run(stopCh)
+	if err != nil {
+		glog.Fatalf("metrics exporter: %v", err)
+	}
+
 	go c.RunInformers(stopCh)
 
 	if c.EnableMutatingWebhook {

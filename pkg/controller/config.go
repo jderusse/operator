@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/kubevault/operator/pkg/metrics"
 	"time"
 
 	pcm "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
@@ -33,6 +34,7 @@ type config struct {
 	ResyncPeriod            time.Duration
 	EnableValidatingWebhook bool
 	EnableMutatingWebhook   bool
+	MetricsExporter *metrics.MetricsExporter
 }
 
 type Config struct {

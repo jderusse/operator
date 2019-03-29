@@ -49,6 +49,9 @@ func (o VaultServerOptions) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (o VaultServerOptions) Validate(args []string) error {
+	if err := o.ExtraOptions.MetricsExporterConfig.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 

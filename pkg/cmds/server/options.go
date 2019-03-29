@@ -2,6 +2,7 @@ package server
 
 import (
 	"flag"
+	"github.com/kubevault/operator/pkg/metrics"
 	"time"
 
 	prom "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
@@ -26,6 +27,7 @@ type ExtraOptions struct {
 	ResyncPeriod            time.Duration
 	EnableValidatingWebhook bool
 	EnableMutatingWebhook   bool
+	MetricsExporterConfig *metrics.MetricsExporterConfigs
 }
 
 func NewExtraOptions() *ExtraOptions {
@@ -36,6 +38,8 @@ func NewExtraOptions() *ExtraOptions {
 		QPS:            100,
 		Burst:          100,
 		ResyncPeriod:   10 * time.Minute,
+		// TODO:
+		MetricsExporterConfig: metrics.NewMetricsExporterConfigs(),
 	}
 }
 
@@ -57,6 +61,7 @@ func (s *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 	pfs := flag.NewFlagSet("vault-server", flag.ExitOnError)
 	s.AddGoFlags(pfs)
 	fs.AddGoFlagSet(pfs)
+	s.MetricsExporterConfig.AddFlags(fs)
 }
 
 func (s *ExtraOptions) ApplyTo(cfg *controller.Config) error {
@@ -70,6 +75,10 @@ func (s *ExtraOptions) ApplyTo(cfg *controller.Config) error {
 	cfg.ClientConfig.Burst = s.Burst
 	cfg.EnableMutatingWebhook = s.EnableMutatingWebhook
 	cfg.EnableValidatingWebhook = s.EnableValidatingWebhook
+
+	if cfg.MetricsExporter, err = metrics.NewMetricsExporter(s.MetricsExporterConfig, nil); err != nil {
+		return err
+	}
 
 	if cfg.KubeClient, err = kubernetes.NewForConfig(cfg.ClientConfig); err != nil {
 		return err
