@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/kubevault/operator/pkg/metrics"
 	"time"
 
 	pcm "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
@@ -10,6 +9,7 @@ import (
 	cs "github.com/kubevault/operator/client/clientset/versioned"
 	vaultinformers "github.com/kubevault/operator/client/informers/externalversions"
 	"github.com/kubevault/operator/pkg/eventer"
+	"github.com/kubevault/operator/pkg/metrics"
 	core "k8s.io/api/core/v1"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +34,7 @@ type config struct {
 	ResyncPeriod            time.Duration
 	EnableValidatingWebhook bool
 	EnableMutatingWebhook   bool
-	MetricsExporter *metrics.MetricsExporter
+	MetricsExporter         *metrics.MetricsExporter
 }
 
 type Config struct {

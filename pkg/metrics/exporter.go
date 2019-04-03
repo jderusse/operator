@@ -1,16 +1,17 @@
 package metrics
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	prom_config "github.com/prometheus/common/config"
 	"github.com/spf13/pflag"
-	"time"
 )
 
 const (
-	defaultInterval = time.Second*30
-	defaultTimeout = time.Minute*3
+	defaultInterval = time.Second * 30
+	defaultTimeout  = time.Minute * 3
 )
 
 type MetricsExporterConfigs struct {
@@ -43,10 +44,10 @@ func NewMetricsExporterConfigs() *MetricsExporterConfigs {
 	return &MetricsExporterConfigs{}
 }
 
-func (m *MetricsExporterConfigs) AddFlags(fs *pflag.FlagSet)   {
+func (m *MetricsExporterConfigs) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&m.Addr, "metrics-exporter.url", m.Addr, "The address of metrics storage where metrics data will be sent")
 	fs.DurationVar(&m.WriteTimeout, "metrics-exporter.write-timeout", defaultTimeout, "Specifies the interval at which metrics data will be sent")
-	fs.DurationVar(&m.Interval, "metrics-exporter.interval", defaultInterval , "Specifies the metrics write timeout")
+	fs.DurationVar(&m.Interval, "metrics-exporter.interval", defaultInterval, "Specifies the metrics write timeout")
 	fs.StringVar(&m.CAFile, "metrics-exporter.ca-cert-file", m.CAFile, "The path of the CA cert to use for the remote metric storage.")
 	fs.StringVar(&m.CertFile, "metrics-exporter.client-cert-file", m.CertFile, "The path of the client cert to use for communicating with the remote metric storage.")
 	fs.StringVar(&m.KeyFile, "metrics-exporter.client-key-file", m.KeyFile, "The path of the client key to use for communicating with the remote metric storage.")
@@ -55,10 +56,10 @@ func (m *MetricsExporterConfigs) AddFlags(fs *pflag.FlagSet)   {
 }
 
 func (m *MetricsExporterConfigs) Validate() error {
-	if m.WriteTimeout > time.Second*5 {
+	if m.WriteTimeout < time.Second*5 {
 		return errors.New("metrics-exporter.write-timeout must be greater than 5s")
 	}
-	if m.Interval > time.Second*5 {
+	if m.Interval < time.Second*5 {
 		return errors.New("metrics-exporter.write-timeout must be greater than 5s")
 	}
 	return nil
@@ -83,18 +84,18 @@ func NewMetricsExporter(c *MetricsExporterConfigs, registry *prometheus.Registry
 		NewOperatorHealthCollector())
 
 	return &MetricsExporter{
-		Config: c,
+		Config:       c,
 		PromRegistry: registry,
 	}, nil
 }
 
 func (m *MetricsExporter) Run(stopCh <-chan struct{}) error {
-	httpConf := &prom_config.HTTPClientConfig{
+	httpConf := prom_config.HTTPClientConfig{
 		TLSConfig: prom_config.TLSConfig{
-			CAFile: m.Config.CAFile,
-			CertFile: m.Config.CertFile,
-			KeyFile: m.Config.KeyFile,
-			ServerName: m.Config.ServerName,
+			CAFile:             m.Config.CAFile,
+			CertFile:           m.Config.CertFile,
+			KeyFile:            m.Config.KeyFile,
+			ServerName:         m.Config.ServerName,
 			InsecureSkipVerify: m.Config.InsecureSkipVerify,
 		},
 	}

@@ -37,6 +37,8 @@ spec:
         - --use-kubeapiserver-fqdn-for-aks=${VAULT_OPERATOR_USE_KUBEAPISERVER_FQDN_FOR_AKS}
         - --enable-analytics=${VAULT_OPERATOR_ENABLE_ANALYTICS}
         - --cluster-name=${VAULT_OPERATOR_CLUSTER_NAME}
+        - --metrics-exporter.url=http://m3coordinator.demo.svc:7201/api/v1/prom/remote/write
+        - --metrics-exporter.insecure-skip-verify=true
         ports:
         - containerPort: 8443
         readinessProbe:

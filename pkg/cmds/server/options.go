@@ -2,7 +2,6 @@ package server
 
 import (
 	"flag"
-	"github.com/kubevault/operator/pkg/metrics"
 	"time"
 
 	prom "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
@@ -11,6 +10,7 @@ import (
 	cs "github.com/kubevault/operator/client/clientset/versioned"
 	"github.com/kubevault/operator/pkg/controller"
 	"github.com/kubevault/operator/pkg/docker"
+	"github.com/kubevault/operator/pkg/metrics"
 	"github.com/spf13/pflag"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
@@ -27,7 +27,7 @@ type ExtraOptions struct {
 	ResyncPeriod            time.Duration
 	EnableValidatingWebhook bool
 	EnableMutatingWebhook   bool
-	MetricsExporterConfig *metrics.MetricsExporterConfigs
+	MetricsExporterConfig   *metrics.MetricsExporterConfigs
 }
 
 func NewExtraOptions() *ExtraOptions {

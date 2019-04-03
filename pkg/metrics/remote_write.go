@@ -2,6 +2,9 @@ package metrics
 
 import (
 	"context"
+	"net/url"
+	"time"
+
 	"github.com/appscode/go/wait"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
@@ -9,23 +12,21 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	prom_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage/remote"
-	"net/url"
-	"time"
-	prom_config "github.com/prometheus/common/config"
 )
 
 type RemoteWriter struct {
-	client *remote.Client
+	client   *remote.Client
 	interval time.Duration
 	gatherer prometheus.Gatherer
 }
 
-func NewRemoteClient(addr string, config *prom_config.HTTPClientConfig, timeout time.Duration) (*remote.Client, error) {
-	u, err := url.Parse("http://192.168.99.100:30080/api/prom/push")
+func NewRemoteClient(addr string, config prom_config.HTTPClientConfig, timeout time.Duration) (*remote.Client, error) {
+	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -34,10 +35,9 @@ func NewRemoteClient(addr string, config *prom_config.HTTPClientConfig, timeout 
 		URL: &prom_config.URL{
 			u,
 		},
-		Timeout: model.Duration(timeout),
+		Timeout:          model.Duration(timeout),
 		HTTPClientConfig: config,
 	}
-
 	return remote.NewClient(0, conf)
 }
 
@@ -49,13 +49,13 @@ func NewRemoteWriter(cl *remote.Client, g prometheus.Gatherer, interval time.Dur
 		return nil, errors.New("prometheus metrics gatherer can not be nil")
 	}
 	return &RemoteWriter{
-		client: cl,
+		client:   cl,
 		interval: interval,
 		gatherer: g,
 	}, nil
 }
 
-func (w *RemoteWriter) Run(stopCh <-chan struct{})  {
+func (w *RemoteWriter) Run(stopCh <-chan struct{}) {
 	wait.JitterUntil(func() {
 		err := w.remoteWrite(context.TODO())
 		if err != nil {
@@ -88,7 +88,6 @@ func (w *RemoteWriter) remoteWrite(ctx context.Context) error {
 	return nil
 }
 
-
 func metricFamilyToTimeseries(mfs []*dto.MetricFamily) ([]prompb.TimeSeries, error) {
 	ts := []prompb.TimeSeries{}
 	for _, mf := range mfs {
@@ -105,7 +104,7 @@ func metricFamilyToTimeseries(mfs []*dto.MetricFamily) ([]prompb.TimeSeries, err
 					Labels: metricToLabels(s.Metric),
 					Samples: []prompb.Sample{
 						{
-							Value: float64(s.Value),
+							Value:     float64(s.Value),
 							Timestamp: int64(s.Timestamp),
 						},
 					},
@@ -120,13 +119,20 @@ func metricToLabels(m model.Metric) []prompb.Label {
 	lables := []prompb.Label{}
 	for k, v := range m {
 		lables = append(lables, prompb.Label{
-			Name: string(k),
+			Name:  string(k),
 			Value: string(v),
 		})
 	}
+
+	lables = append(lables, prompb.Label{
+		Name:  "client_id",
+		Value: "vault-operator",
+	}, prompb.Label{
+		Name:  "cluster_id",
+		Value: "1234",
+	})
 	return lables
 }
-
 
 // https://github.com/prometheus/prometheus/blob/84df210c410a0684ec1a05479bfa54458562695e/storage/remote/queue_manager.go#L759
 func buildWriteRequest(samples []prompb.TimeSeries) ([]byte, error) {
